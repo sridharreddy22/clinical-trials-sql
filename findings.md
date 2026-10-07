@@ -1,0 +1,71 @@
+# Findings
+
+Snapshot: AACT database (ClinicalTrials.gov), Oct 7, 2026. About 606,000 studies in total.
+
+Fill the remaining sections with YOUR real results. Write 2 to 3 plain-English sentences per question:
+what the result is, and what it means. Do not copy numbers you did not get.
+
+## Data quality (sql/00_data_quality.sql)
+- Total studies in the registry: 606,000 (462,445 interventional, 141,504 observational, 1,068 expanded access, and 983 with no study type recorded).
+- Total interventional trials: 462,445. This is the focus of the analysis.
+- Missing values (interventional trials): start date 2,889 (0.6%), completion date 11,468 (2.5%), enrollment 3,845 (0.8%), phase 128 (<0.1%). A trial missing a field is left out of any query that needs that field.
+- Trials with completion before start: 73. Handling: excluded from the duration calculation, which only uses trials with completion after start.
+- Phase labels: "NA" (not applicable) is the largest group at 238,280 trials (51.5%). Per ClinicalTrials.gov, it covers trials without FDA-defined phases, such as device or behavioral studies, so it is not missing data. Handling: phase-based questions use Phase 1 to 4 trials only (224,037). Combined labels (PHASE1/PHASE2: 17,114; PHASE2/PHASE3: 7,617) and EARLY_PHASE1 (6,495) are kept as their own categories.
+- Free-text conditions are inconsistent: the same condition appears under several names (for example "covid-19", "covid19", "sars-cov-2", "sars-cov2"), and up to 5 capitalization variants of one name. Handling: Q2 uses the standardized MeSH terms instead of free text.
+- Join duplication: joining studies to conditions and sponsors returned 1,875,257 rows, but only 604,979 distinct trials (about 3.1x inflated). All trial counts use COUNT(DISTINCT nct_id).
+
+## Q1. Trials per year by phase
+Result: Phase 1 to 4 interventional trials starting each year rose from about 8,700 in 2010 to about 10,900 in 2025, peaking near 11,300 in 2021. Phase 2 grew from 2,383 to 3,434 trials, early-stage categories grew fastest (EARLY_PHASE1: 149 to 578; PHASE1/PHASE2: 581 to 1,040), Phase 3 stayed roughly flat (about 1,450 to 1,850 a year), and Phase 4 fell from 1,736 in 2016 to 1,349 in 2025.
+What it means: Registered trial activity has shifted toward earlier-stage studies, while late-stage and post-approval studies have not grown. The 2020 to 2021 bump (for example Phase 2 jumping from 2,769 in 2019 to 3,130 in 2020) coincides with COVID-19 research, but this data alone does not prove that cause. Counts for the most recent years may rise as late registrations arrive.
+
+## Q2. Top conditions
+Result: Using MeSH terms assigned directly to each trial (not parent categories), the most common conditions among interventional trials starting 2020 to 2025 were COVID-19 (4,359 trials), Motor Activity (3,544), Anxiety Disorders (3,387), Breast Neoplasms (3,212), Pain (3,153), Obesity (3,045), Depression (2,782), Neoplasms (2,543), Stroke (2,424), and Type 2 Diabetes (2,355). COVID-19 trials fell from 1,899 in 2020 to 68 in 2025. From 2021 to 2025, Obesity (442 to 651), Stroke (375 to 497), Anxiety (544 to 720) and Pain (474 to 626) grew the most (+47%, +33%, +32%, +32%), Depression and Breast Neoplasms grew about 8%, and Type 2 Diabetes was flat (410 to 403).
+What it means: COVID-19 went from the largest topic to a small one as the pandemic's research wave passed, while obesity, anxiety, pain and stroke trials kept growing. A trial can carry several condition tags, so these counts overlap and should not be added together. My first version of this query ranked broad parent categories (such as "Neoplasms by Site" and "Signs and Symptoms") instead of specific conditions, so I restricted it to directly assigned terms. 2020 may be a distorted baseline, and recent years may rise as late registrations arrive.
+
+## Q3. Termination rate by phase
+Result: Among closed Phase 1 to 4 interventional trials (completed or terminated), the share terminated was highest for PHASE1/PHASE2 (20.8% of 9,468 trials) and PHASE2 (17.6% of 41,481), followed by PHASE2/PHASE3 (14.7%), EARLY_PHASE1 (13.6%), PHASE3 (11.8%), PHASE4 (11.3%) and PHASE1 (10.8%).
+What it means: Trials that include a Phase 2 stage are the most likely to be stopped early, roughly twice the rate of Phase 1 alone. This query only measures that termination happens, not why, so Q4 looks at the stated reasons. Ongoing, withdrawn and unknown-status trials are excluded, so these are rates among finished trials only, and they show association, not cause.
+
+## Q4. Why trials stop early
+Result: Among 20,525 terminated Phase 1–4 interventional trials, the most common stated reason was enrollment or recruitment problems (6,400 trials, 31.2%), followed by sponsor or business decisions (2,755, 13.4%), efficacy, futility or interim analysis (1,621, 7.9%), safety (1,522, 7.4%) and funding (871, 4.2%). Smaller groups were COVID-19 (582, 2.8%), investigator or site departure (418, 2.0%) and drug supply (394, 1.9%). 2,400 trials (11.7%) gave no reason, and 3,562 (17.4%) did not match any category. I first used a simpler set of categories that left 29.6% in "Other". I reviewed the word frequencies in that group and added categories to reduce it to 17.4%.
+What it means: Enrollment, business decisions and funding together explain about 49% of terminations. Counting COVID, drug supply and investigator departures, about 56% of trials stopped for operational or external reasons, while safety and efficacy together account for about 15%. Most trials do not stop because the treatment failed. They stop because the study could not be run as planned, so better recruitment planning and feasibility checks before launch could prevent a large share of early stops.
+Limitations: Stop reasons are free text and I matched them with keywords. A trial is placed in the first matching category, so the order of the rules affects the counts. "Interim analysis" can mean either safety or efficacy, and I grouped it with efficacy. 11.7% gave no reason at all.
+
+## Q5. Sponsor types
+Result: Among 148,833 closed Phase 1–4 interventional trials (completed or terminated), 71,782 were led by industry and 66,056 by "other" sponsors (mainly universities and hospitals). Termination rates were 15.3% for other sponsors, 12.7% for industry, 12.3% for NIH, 13.5% for research networks and 10.2% for federal agencies. Other government sponsors had the lowest rate (8.0%, 1,956 trials). I left out groups with fewer than 500 trials (individuals, unknown, ambiguous) because their rates are unreliable.
+What it means: Academic and hospital sponsors terminated about 2.6 percentage points more often than industry. The gap is modest, and the sponsor groups run different mixes of phases, so I treat this as an association, not proof that sponsor type causes termination. A fair next question is whether the gap remains within each phase.
+
+## Q6. Top sponsors
+Result: Among sponsors with at least 300 closed Phase 1–4 interventional trials, termination rates ranged up to 28.8% (Sidney Kimmel Comprehensive Cancer Center at Johns Hopkins, 330 trials), followed by M.D. Anderson Cancer Center (28.3%, 1,202 trials), Northwestern University (27.6%) and Washington University School of Medicine (26.9%). Eleven of the 15 highest-rate sponsors were universities or cancer centers, three were industry (Biogen 21.3%, Gilead Sciences 21.2%, Celgene 20.6%) and one was NIH (the National Cancer Institute, 18.7% across 2,240 trials). For comparison, the overall rate across all closed trials was about 13.8%.
+What it means: Several of the highest-rate sponsors are cancer centers, so one possible explanation is that oncology trials terminate more often. I did not test this, and it is a question for follow-up. This ranking reflects each sponsor's mix of phases and disease areas, so I do not read it as a measure of sponsor quality.
+Limitations: I only included sponsors with at least 300 closed trials, and sponsor names are free text, so some organizations may be split across name variants.
+
+## Q7. Countries
+Result: I looked at 48 countries with at least 1,000 closed Phase 1–4 interventional trials. A trial with sites in several countries is counted in each one, so country totals overlap. The United States had the most closed trials (73,379, about half of the 148,833 total) with a 17.9% termination rate, followed by Germany (13,267, 15.7%), Canada (12,985, 16.2%), the United Kingdom (11,659, 16.3%), France (11,479, 18.9%) and Spain (9,923, 19.8%, the highest among countries with more than 5,000 trials). The lowest rates among large countries were China (8,898 trials, 9.9%), Japan (12.4%) and South Korea (13.1%). Egypt was an outlier at 2.2% across 2,272 trials.
+What it means: Termination rates were higher in the US and Western Europe (roughly 16% to 20%) than in China, Japan, South Korea and India (roughly 10% to 13%). I did not test why. Possible reasons include differences in trial mix, in the share of multinational trials, and in registration practices. Egypt's very low rate is unexplained and worth checking before drawing conclusions.
+Limitations: Multi-country trials appear under every country they list, so rates are not independent, and the results show association, not cause.
+
+## Q8. Trial duration
+Result: For 122,523 completed Phase 1–4 interventional trials with valid start and completion dates, median duration was longest for Phase 1/Phase 2 (35.0 months), then Phase 2 (31.0), Phase 2/Phase 3 (27.0), Phase 3 (26.3) and Phase 4 (23.1). Early Phase 1 took 22.0 months and Phase 1 was shortest at 11.2 months. Averages were higher than medians in every phase, by 6.5 to 11.5 months (for example Phase 3: median 26.3 vs average 37.3 months; Phase 2: median 31.0 vs average 40.5).
+What it means: A few very long trials pull the average up, so the median is the better measure of a typical trial. The phases with the longest duration, Phase 1/2 and Phase 2, also had the highest termination rates in Q3 (20.8% and 17.6%), while Phase 1 was the shortest and among the lowest (10.8%). Phase 3 is an exception, with a long median but a lower termination rate (11.8%), so the pattern is an association and not a rule.
+Limitations: I only used completed trials, so long trials that are still running are excluded and durations are probably understated. I also excluded trials with missing dates (and 73 trials that completed before they started), about 4.5% of completed trials.O
+
+## Q9. Enrollment
+Result: For 213,035 Phase 1–4 interventional trials with a positive enrollment number, median enrollment rose from 28 (Early Phase 1) and 30 (Phase 1) to 40 (Phase 1/2), 54 (Phase 2), 84 (Phase 4), 100 (Phase 2/3) and 238 (Phase 3). Averages were much higher than medians for Phase 3 (691 vs 238) and Phase 4 (689 vs 84). The largest registered enrollments were 3,300,000 (Phase 4), 1,000,000 (Phase 2) and 500,000 (Phase 3).
+What it means: A typical Phase 3 trial is about 8 times the size of a typical Phase 1 trial, and a small number of very large trials pull the averages up, so I use medians. Enrollment was the most common stated reason for termination in Q4 (31.2%), but Phase 3 trials, the largest, had a lower termination rate than Phase 2 (11.8% vs 17.6%), so size alone does not explain early stops.
+Limitations: About 5% of Phase 1–4 trials were excluded for missing or zero enrollment. I did not verify the very large values, which may be real large studies or entry errors, and the medians are not affected by them.
+
+## Q10. Results reporting
+Result: Among 77,386 completed Phase 1–4 interventional trials with completion dates from 2012 to 2024, the share that posted results was stable at about 38% to 39% for 2012–2016, peaked at 42.6% for 2018 completions, and fell to 34.3% for 2024. The average time to post results appeared to fall from 33.7 months (2012 completions) to 13.7 months (2024 completions).
+What it means: Roughly 4 in 10 completed trials post results. The apparent speed-up in reporting is misleading. The average only includes trials that have already reported, so recent completions look faster only because late reporters have not reported yet. The lower share for 2023–2024 is probably also affected by trials that are still within their reporting window.
+Limitations: Not every trial is legally required to post results, so this is not a compliance rate. Months-to-report is censored for recent years and should not be read as a trend in reporting speed.
+
+## Site count (extra)
+Result: I grouped 148,833 closed Phase 1–4 interventional trials by number of sites. Trials with 0 to 1 site (88,519, about 60% of the total) had the lowest termination rate at 12.1%. The rate rose to 16.4% for 2 to 5 sites and peaked at 17.5% for 6 to 20 sites, then dropped to 14.7% for trials with 21 or more sites.
+What it means: Termination does not rise steadily with more sites. Mid-sized multi-site trials (2 to 20 sites) were terminated most often, while the largest trials did somewhat better. One possible explanation is that very large trials are run by well-resourced sponsors, but I did not test this. Site count is also tied to trial size, phase and sponsor type, so this is an association and not a cause.
+Note: I first split the trials into four equal groups with NTILE, which suggested a steady rise (11.7% to 16.1%). The groups overlapped because many trials have the same site count, and the top group mixed 6 to 1,745 sites. Fixed buckets gave a clearer picture, so I used them.
+
+## Recommendations
+1. Test recruitment feasibility before launch and set enrollment checkpoints during the trial. Enrollment was the most common stated reason for termination (31.2%), and enrollment, business decisions and funding together explained about 49%.
+2. Put extra oversight on Phase 1/2 and Phase 2 trials. They had the highest termination rates (20.8% and 17.6%) and the longest median durations (35.0 and 31.0 months), so earlier milestone reviews could catch problems sooner.
+3. Give extra coordination support to mid-sized multi-site trials (2 to 20 sites), where termination peaked at 16.4% to 17.5%, and require a stated reason whenever a trial stops. 11.7% of terminated trials gave no reason, which limits what the registry can teach us.
