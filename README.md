@@ -18,7 +18,7 @@ PostgreSQL (AACT database), DBeaver, SQL (joins, CTEs, window functions, CASE, p
 - The most common stated reason for termination was enrollment or recruitment (31.2% of 20,525 terminated trials). Enrollment, business decisions and funding together explained about 49%, while safety and efficacy together were about 15%.
 - Median trial duration was 35.0 months for Phase 1/2 trials and 11.2 months for Phase 1. The longest phases were also the most often terminated.
 - Termination was highest for trials with 6 to 20 sites (17.5%) and lowest for trials with 0 to 1 site (12.1%). The largest trials (21+ sites) were in between at 14.7% (association, not cause).
-- About 4 in 10 completed trials (2012–2024) posted results.
+- About 34-43% of completed trials (2012-2024) posted results, depending on the year.
 
 ## Questions answered
 | # | Question | File |
