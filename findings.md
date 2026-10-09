@@ -2,9 +2,6 @@
 
 Snapshot: AACT database (ClinicalTrials.gov), Oct 7, 2026. About 606,000 studies in total.
 
-Fill the remaining sections with YOUR real results. Write 2 to 3 plain-English sentences per question:
-what the result is, and what it means. Do not copy numbers you did not get.
-
 ## Data quality (sql/00_data_quality.sql)
 - Total studies in the registry: 606,000 (462,445 interventional, 141,504 observational, 1,068 expanded access, and 983 with no study type recorded).
 - Total interventional trials: 462,445. This is the focus of the analysis.
@@ -48,7 +45,7 @@ Limitations: Multi-country trials appear under every country they list, so rates
 ## Q8. Trial duration
 Result: For 122,523 completed Phase 1–4 interventional trials with valid start and completion dates, median duration was longest for Phase 1/Phase 2 (35.0 months), then Phase 2 (31.0), Phase 2/Phase 3 (27.0), Phase 3 (26.3) and Phase 4 (23.1). Early Phase 1 took 22.0 months and Phase 1 was shortest at 11.2 months. Averages were higher than medians in every phase, by 6.5 to 11.5 months (for example Phase 3: median 26.3 vs average 37.3 months; Phase 2: median 31.0 vs average 40.5).
 What it means: A few very long trials pull the average up, so the median is the better measure of a typical trial. The phases with the longest duration, Phase 1/2 and Phase 2, also had the highest termination rates in Q3 (20.8% and 17.6%), while Phase 1 was the shortest and among the lowest (10.8%). Phase 3 is an exception, with a long median but a lower termination rate (11.8%), so the pattern is an association and not a rule.
-Limitations: I only used completed trials, so long trials that are still running are excluded and durations are probably understated. I also excluded trials with missing dates (and 73 trials that completed before they started), about 4.5% of completed trials.O
+Limitations: I only used completed trials, so long trials that are still running are excluded and durations are probably understated. I also excluded trials with missing dates (and 73 trials that completed before they started), about 4.5% of completed trials.
 
 ## Q9. Enrollment
 Result: For 213,035 Phase 1–4 interventional trials with a positive enrollment number, median enrollment rose from 28 (Early Phase 1) and 30 (Phase 1) to 40 (Phase 1/2), 54 (Phase 2), 84 (Phase 4), 100 (Phase 2/3) and 238 (Phase 3). Averages were much higher than medians for Phase 3 (691 vs 238) and Phase 4 (689 vs 84). The largest registered enrollments were 3,300,000 (Phase 4), 1,000,000 (Phase 2) and 500,000 (Phase 3).
